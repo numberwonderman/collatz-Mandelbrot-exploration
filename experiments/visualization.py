@@ -69,5 +69,10 @@ def plot_collatz_mandelbrot_overlay(csv_path: str):
     # plt.show() # Uncomment if you want the plot to appear immediately
     
 if __name__ == "__main__":
-    # Path assumes the script is run from project root or inside src/
-    plot_collatz_mandelbrot_overlay('../data/results/experiment_01_results.csv')
+    # Get the directory of the current script (which is 'experiments/')
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Go up one level to the project root, then down to 'data/results'
+    csv_file_path = os.path.join(script_dir, '..', 'data', 'results', 'experiment_01_results.csv')
+    
+    plot_collatz_mandelbrot_overlay(csv_file_path)
