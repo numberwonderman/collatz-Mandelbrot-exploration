@@ -1,6 +1,10 @@
 import pandas as pd
 from scipy.stats import pearsonr
 import numpy as np # Needed for the map_params_polar and map_params_logarithmic functions
+# Add these three lines near the top of your script
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # --- ASSUMED UTILITY FUNCTIONS ---
 # This is a standard Mandelbrot calculation function (from the original experiment)
@@ -100,7 +104,14 @@ def run_comparative_study():
 
     print("\n-------------------------------------")
     print(f"🏆 Best Correlation Found: {best_hypothesis} (r = {best_r:.4f})")
-    print("-------------------------------------")
+    print("-------------------------------------") 
+    # Add these lines to experiment_02_comparative_study.py
+    # -----------------------------------------------------
+    df_clean.to_csv(data_path, index=False)
+    print(f"✅ Updated data saved successfully to {data_path} with new columns (z_polar, escape_polar, etc.).")
+    # -----------------------------------------------------
+
+
 
 if __name__ == "__main__":
     run_comparative_study()
