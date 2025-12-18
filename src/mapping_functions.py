@@ -60,3 +60,28 @@ def map_params_reciprocal_products(a: int, b: int, c: int) -> complex:
     imag_part = 1.0 / (a * c)
     
     return complex(real_part, imag_part)
+
+   # Line 64:
+def map_params_polar_v2(a: int, b: int, c: int) -> complex:
+    # Everything below here MUST be indented
+    try:
+        ratio_ba = b / a
+        log_factor = np.log(ratio_ba) 
+        
+        magnitude = (c / a) * log_factor
+        
+        angle = (b * np.pi) / a
+        
+        return magnitude * np.cos(angle) + 1j * magnitude * np.sin(angle)
+        
+    except ValueError:
+        return 0.0 + 0.0j 
+# Ensure the line AFTER the function (line 79 or so) is unindented if it's new code.python experiments/run_experiment_paper_2.py
+def map_params_power_squared(a: int, b: int, c: int) -> complex:
+    # Hypothesis E: B/A Dominance (Squared)
+    try:
+        real_part = (b / a) ** 2
+        imag_part = -(c / a)
+        return real_part + imag_part * 1j
+    except ZeroDivisionError:
+        return 0.0 + 0.0j

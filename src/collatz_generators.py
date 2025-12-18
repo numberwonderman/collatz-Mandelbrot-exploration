@@ -1,6 +1,6 @@
 from typing import Dict
 
-def generalized_collatz(n: int, a: int, b: int, c: int, max_iterations: int = 1000000) -> Dict:
+def generalized_collatz(n: int, a: int, b: int, c: int, max_iterations: int = 50000) -> Dict:
     """
     MOD-BASED generalized Collatz sequence. (a: Divisor, b: Multiplier, c: Adder)
     Terminates only on cycle detection or max_iter/divergence.
@@ -14,8 +14,6 @@ def generalized_collatz(n: int, a: int, b: int, c: int, max_iterations: int = 10
     visited = {n: 0} 
     current = n
     
-    # We will remove the DEBUG print statements for a cleaner run now
-    
     for i in range(max_iterations):
         
         # 1. Magnitude Safety Check
@@ -24,16 +22,20 @@ def generalized_collatz(n: int, a: int, b: int, c: int, max_iterations: int = 10
             
         # --- Calculate Next Value (next_val) ---
         if current % a == 0:
+            # Case 1: Divisible by 'a'
             next_val = current // a
         else:
+            # Case 2: Not divisible by 'a' -> Apply (B*n + C) then shortcut
+            
+            # 1. Apply the growth step
             numerator = b * current + c
             
-            if a == 2 and b == 3 and c == 1:
-                next_val = numerator
-            else:
-                while numerator % a == 0 and numerator > 0:
-                    numerator = numerator // a
-                next_val = numerator
+            # 2. UNIFORM MAXIMAL DIVISION SHORTCUT (T_A,B,C(n) = (B*n + C) / A^k)
+            # This loop runs while the result is still divisible by A
+            while numerator % a == 0 and numerator > 0:
+                numerator = numerator // a
+                
+            next_val = numerator
 
         # 2. Cycle Detection (The ONLY termination check besides max_iter/divergence)
         if next_val in visited:
