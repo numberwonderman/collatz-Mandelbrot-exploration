@@ -52,34 +52,33 @@ class GaussianCollatz {
 
 // TEST RUN with your B=1 "Gold Mine"
 // --- MASTER EXECUTION BLOCK ---
+// --- GALAXY SCANNER (N=1000) ---
 const fs = require('fs');
-const masterEngine = new GaussianCollatz({re: 3, im: 0}, {re: 1, im: 0});
-const scales = [0.0001, 0.0002, 0.0005, 0.001];
+const scanner = new GaussianCollatz({re: 3, im: 0}, {re: 1, im: 0});
+const GOLDEN_SCALE = 0.0001;
+const TEST_LIMIT = 1000;
 
-let logContent = "--- GALAXY INTEGER DISCOVERY LOG ---\n";
-logContent += `Date: ${new Date().toLocaleString()}\n`;
-logContent += "Hypothesis: Gaussian Collatz resting points inhabit the Mandelbrot Set at 10^-4 scale.\n\n";
+let matches = 0;
+let resultsData = "Input, Final_RE, Final_IM, Mandelbrot_Match\n";
 
-console.log("🚀 Starting Discovery Run...");
+console.log(`🚀 Scanning the Galaxy (N=${TEST_LIMIT}) at Scale ${GOLDEN_SCALE}...`);
 
-[7, 13, 27].forEach(input => {
-    const result = masterEngine.runExperiment({re: input, im: 0});
-    logContent += `Input ${input} landed at: (${result.finalPoint.re}, ${result.finalPoint.im})\n`;
+for (let i = 1; i <= TEST_LIMIT; i++) {
+    const res = scanner.runExperiment({re: i, im: 0});
+    const isMatch = scanner.isInMandelbrot(res.finalPoint, GOLDEN_SCALE);
     
-    scales.forEach(s => {
-        const isMatch = masterEngine.isInMandelbrot(result.finalPoint, s);
-        logContent += `  Scale ${s}: ${isMatch ? "✅ MATCH!" : "❌ Miss"}\n`;
-    });
-    logContent += "\n";
-});
-
-// Save to the experiments folder
-try {
-    fs.writeFileSync('experiments/discovery_log.txt', logContent);
-    console.log("📁 Success! Evidence saved to experiments/discovery_log.txt");
-    console.log(logContent); // Also print it so you can see it now
-} catch (err) {
-    // Fallback if folder structure is different
-    fs.writeFileSync('discovery_log.txt', logContent);
-    console.log("📁 Saved to root directory as discovery_log.txt");
+    if (isMatch) matches++;
+    
+    // Log the data row
+    resultsData += `${i}, ${res.finalPoint.re}, ${res.finalPoint.im}, ${isMatch}\n`;
 }
+
+const successRate = ((matches / TEST_LIMIT) * 100).toFixed(2);
+
+console.log(`\n--- SCAN COMPLETE ---`);
+console.log(`Total Matches: ${matches} / ${TEST_LIMIT}`);
+console.log(`Success Rate: ${successRate}%`);
+
+// Save the full dataset for your Paper 3
+fs.writeFileSync('experiments/galaxy_scan_1000.csv', resultsData);
+console.log(`📊 Full dataset saved to experiments/galaxy_scan_1000.csv`);
