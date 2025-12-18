@@ -1,0 +1,22 @@
+--- GALAXY INTEGER DISCOVERY LOG ---
+Date: 12/18/2025, 4:24:24 PM
+Hypothesis: Gaussian Collatz resting points inhabit the Mandelbrot Set at 10^-4 scale.
+
+Input 7 landed at: (1465, -1347)
+  Scale 0.0001: ✅ MATCH!
+  Scale 0.0002: ✅ MATCH!
+  Scale 0.0005: ❌ Miss
+  Scale 0.001: ❌ Miss
+
+Input 13 landed at: (979, 903)
+  Scale 0.0001: ✅ MATCH!
+  Scale 0.0002: ✅ MATCH!
+  Scale 0.0005: ❌ Miss
+  Scale 0.001: ❌ Miss
+
+Input 27 landed at: (-926, -942)
+  Scale 0.0001: ✅ MATCH!
+  Scale 0.0002: ✅ MATCH!
+  Scale 0.0005: ✅ MATCH!
+  Scale 0.001: ❌ Miss
+
