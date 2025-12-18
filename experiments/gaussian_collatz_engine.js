@@ -1,7 +1,9 @@
+const fs = require('fs');
+
 class GaussianCollatz {
     constructor(alpha, beta) {
         this.alpha = alpha; // {re, im} 
-        this.beta = beta;   // {re, im} - Keep this at {re: 1, im: 0}
+        this.beta = beta;   // {re, im}
     }
 
     isEven(z) {
@@ -19,21 +21,18 @@ class GaussianCollatz {
         }
     }
 
-    // THE COOKIE CUTTER: Checks if point z (scaled) is in the Mandelbrot Set
-    isInMandelbrot(z, scale = 0.01) {
+    isInMandelbrot(z, scale = 0.0001) {
         let cx = z.re * scale;
         let cy = z.im * scale;
         let x = 0, y = 0;
-        
-        // Standard Mandelbrot iteration: z = z^2 + c
         for (let i = 0; i < 100; i++) {
             let xNew = x*x - y*y + cx;
             let yNew = 2*x*y + cy;
             x = xNew;
             y = yNew;
-            if (x*x + y*y > 4) return false; // Escaped!
+            if (x*x + y*y > 4) return false;
         }
-        return true; // Stayed stable (In the set)
+        return true;
     }
 
     runExperiment(startZ, iterations = 100) {
@@ -42,43 +41,44 @@ class GaussianCollatz {
             current = this.step(current);
             if (current.re ** 2 + current.im ** 2 > 1000000) break;
         }
-        // Return if the final resting point is in our "Cookie Cutter"
-        return {
-            finalPoint: current,
-            isStableInMandel: this.isInMandelbrot(current)
-        };
+        return { finalPoint: current };
     }
 }
 
-// TEST RUN with your B=1 "Gold Mine"
-// --- MASTER EXECUTION BLOCK ---
-// --- GALAXY SCANNER (N=1000) ---
-const fs = require('fs');
-const scanner = new GaussianCollatz({re: 3, im: 0}, {re: 1, im: 0});
+// --- EXECUTION ---
+const runner = new GaussianCollatz({re: 3, im: 0}, {re: 1, im: 0});
 const GOLDEN_SCALE = 0.0001;
 const TEST_LIMIT = 1000;
 
-let matches = 0;
-let resultsData = "Input, Final_RE, Final_IM, Mandelbrot_Match\n";
+let finalMatches = 0;
+let resultsData = "Input,Final_RE,Final_IM,Magnitude,Mandel_Match\n";
+const uniqueDestinations = new Set();
 
-console.log(`🚀 Scanning the Galaxy (N=${TEST_LIMIT}) at Scale ${GOLDEN_SCALE}...`);
+console.log(`🚀 Running Sanity Check on ${TEST_LIMIT} points...`);
 
 for (let i = 1; i <= TEST_LIMIT; i++) {
-    const res = scanner.runExperiment({re: i, im: 0});
-    const isMatch = scanner.isInMandelbrot(res.finalPoint, GOLDEN_SCALE);
+    const res = runner.runExperiment({re: i, im: 0});
+    const posKey = `${res.finalPoint.re},${res.finalPoint.im}`;
+    uniqueDestinations.add(posKey);
     
-    if (isMatch) matches++;
+    const isMatch = runner.isInMandelbrot(res.finalPoint, GOLDEN_SCALE);
+    if (isMatch) finalMatches++;
     
-    // Log the data row
-    resultsData += `${i}, ${res.finalPoint.re}, ${res.finalPoint.im}, ${isMatch}\n`;
+    const mag = Math.sqrt(res.finalPoint.re**2 + res.finalPoint.im**2).toFixed(2);
+    resultsData += `${i},${res.finalPoint.re},${res.finalPoint.im},${mag},${isMatch}\n`;
 }
 
-const successRate = ((matches / TEST_LIMIT) * 100).toFixed(2);
+console.log(`\n--- SANITY CHECK RESULTS ---`);
+console.log(`Unique Destinations Found: ${uniqueDestinations.size}`);
+console.log(`Mandelbrot Success Rate: ${((finalMatches / TEST_LIMIT) * 100).toFixed(2)}%`);
 
-console.log(`\n--- SCAN COMPLETE ---`);
-console.log(`Total Matches: ${matches} / ${TEST_LIMIT}`);
-console.log(`Success Rate: ${successRate}%`);
+if (uniqueDestinations.size === 1) {
+    console.log("⚠️ RAT DETECTED: Everything is landing in the same hole.");
+} else if (uniqueDestinations.size < 20) {
+    console.log("🧐 SEMI-STABLE: There are a few common 'sinks' (Star Systems).");
+} else {
+    console.log("🌌 GALAXY CONFIRMED: The points are distributing across the complex plane.");
+}
 
-// Save the full dataset for your Paper 3
 fs.writeFileSync('experiments/galaxy_scan_1000.csv', resultsData);
-console.log(`📊 Full dataset saved to experiments/galaxy_scan_1000.csv`);
+console.log(`📊 Dataset saved: experiments/galaxy_scan_1000.csv`);
