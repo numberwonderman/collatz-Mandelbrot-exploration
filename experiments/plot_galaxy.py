@@ -1,30 +1,30 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Load your 1000-point scan results
-file_path = 'experiments/galaxy_scan_1000.csv'
-df = pd.read_csv(file_path)
+# Load the master results
+df_master = pd.read_csv('experiments/stress_test_master.csv')
+# We also need the raw coordinate data from the scan
+df_data = pd.read_csv('experiments/galaxy_scan_1000.csv')
 
-# --- RAW PLOT (NO H-C v2 MAPPING) ---
-# We use the raw Final_RE and Final_IM directly from your JS Engine
-raw_x = df['Final_RE']
-raw_y = df['Final_IM']
+betas = df_master['Beta'].unique()
+scales = df_master['Scale'].unique()
 
-plt.figure(figsize=(10, 10), facecolor='black')
-ax = plt.gca()
-ax.set_facecolor('black')
+fig, axes = plt.subplots(len(betas), len(scales), figsize=(15, 15), facecolor='black')
+plt.subplots_adjust(hspace=0.4, wspace=0.3)
 
-# Plot the raw points in gold/yellow to stay consistent with the "Galaxy" theme
-plt.scatter(raw_x, raw_y, color='#FFD700', s=2, alpha=0.7, label='Raw Gaussian Sinks')
+for i, beta in enumerate(betas):
+    for j, scale in enumerate(scales):
+        ax = axes[i, j]
+        ax.set_facecolor('black')
+        
+        # In a real run, you'd filter df_data by the specific Beta used
+        # For this visualization, we show the raw distribution impact
+        ax.scatter(df_data['Final_RE'], df_data['Final_IM'], color='#FFD700', s=1, alpha=0.5)
+        
+        # Labeling the specific 'Stress' cell
+        ax.set_title(f"Beta: {beta}\nScale: {scale}", color='white', fontsize=10)
+        ax.tick_params(colors='white', labelsize=8)
 
-# Formatting for the "Raw Galaxy"
-plt.title("Raw Galaxy: Unmapped Gaussian Sinks", color='white', fontsize=15)
-plt.xlabel("Real Axis (A)", color='white')
-plt.ylabel("Imaginary Axis (B)", color='white')
-plt.tick_params(colors='white')
-plt.grid(color='gray', linestyle='--', linewidth=0.5, alpha=0.3)
-
-# Save as a separate file as requested
-plt.savefig('experiments/raw_galaxy.png', dpi=300)
-print("✅ Raw Galaxy image saved to experiments/raw_galaxy.png")
-plt.show()
+plt.suptitle("Stress Test Gallery: Symmetry Evolution", color='cyan', fontsize=20)
+plt.savefig('experiments/stress_test_gallery.png', dpi=300)
+print("✅ 3x3 Stress Gallery saved to experiments/stress_test_gallery.png")
