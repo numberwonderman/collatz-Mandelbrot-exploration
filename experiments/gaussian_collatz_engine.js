@@ -7,7 +7,8 @@ class GaussianCollatz {
     }
 
     isEven(z) {
-        return Math.abs(z.re + z.im) % 2 === 0;
+        // Your established parity rule
+        return (Math.abs(z.re) + Math.abs(z.im)) % 2 === 0;
     }
 
     step(z) {
@@ -21,7 +22,7 @@ class GaussianCollatz {
         }
     }
 
-    isInMandelbrot(z, scale = 0.0001) {
+    isInMandelbrot(z, scale) {
         let cx = z.re * scale;
         let cy = z.im * scale;
         let x = 0, y = 0;
@@ -41,44 +42,43 @@ class GaussianCollatz {
             current = this.step(current);
             if (current.re ** 2 + current.im ** 2 > 1000000) break;
         }
-        return { finalPoint: current };
+        return current;
     }
 }
 
-// --- EXECUTION ---
-const runner = new GaussianCollatz({re: 3, im: 0}, {re: 1, im: 0});
-const GOLDEN_SCALE = 0.0001;
-const TEST_LIMIT = 1000;
+// --- AUTOMATED STRESS TEST SUITE ---
+const SCALES = [0.001, 0.0001, 0.00001]; // Testing scale sensitivity
+const SAMPLE_SIZE = 1000;
+const BETAS = [
+    {re: 1, im: 0}, // Your current B=1
+    {re: 2, im: 0}, // Integer Shift
+    {re: 1, im: 1}  // Complex Shift (i+1)
+];
 
-let finalMatches = 0;
-let resultsData = "Input,Final_RE,Final_IM,Magnitude,Mandel_Match\n";
-const uniqueDestinations = new Set();
+let finalReport = "Beta,Scale,ResidencyRate,UniqueSinks\n";
 
-console.log(`🚀 Running Sanity Check on ${TEST_LIMIT} points...`);
+console.log(`🧪 Starting Stress Tests for Mr K...`);
 
-for (let i = 1; i <= TEST_LIMIT; i++) {
-    const res = runner.runExperiment({re: i, im: 0});
-    const posKey = `${res.finalPoint.re},${res.finalPoint.im}`;
-    uniqueDestinations.add(posKey);
+BETAS.forEach(beta => {
+    const runner = new GaussianCollatz({re: 3, im: 0}, beta);
     
-    const isMatch = runner.isInMandelbrot(res.finalPoint, GOLDEN_SCALE);
-    if (isMatch) finalMatches++;
-    
-    const mag = Math.sqrt(res.finalPoint.re**2 + res.finalPoint.im**2).toFixed(2);
-    resultsData += `${i},${res.finalPoint.re},${res.finalPoint.im},${mag},${isMatch}\n`;
-}
+    SCALES.forEach(scale => {
+        let matches = 0;
+        const sinks = new Set();
 
-console.log(`\n--- SANITY CHECK RESULTS ---`);
-console.log(`Unique Destinations Found: ${uniqueDestinations.size}`);
-console.log(`Mandelbrot Success Rate: ${((finalMatches / TEST_LIMIT) * 100).toFixed(2)}%`);
+        for (let i = 1; i <= SAMPLE_SIZE; i++) {
+            const finalPoint = runner.runExperiment({re: i, im: 0});
+            sinks.add(`${finalPoint.re},${finalPoint.im}`);
+            if (runner.isInMandelbrot(finalPoint, scale)) matches++;
+        }
 
-if (uniqueDestinations.size === 1) {
-    console.log("⚠️ RAT DETECTED: Everything is landing in the same hole.");
-} else if (uniqueDestinations.size < 20) {
-    console.log("🧐 SEMI-STABLE: There are a few common 'sinks' (Star Systems).");
-} else {
-    console.log("🌌 GALAXY CONFIRMED: The points are distributing across the complex plane.");
-}
+        const rate = ((matches / SAMPLE_SIZE) * 100).toFixed(2);
+        const betaLabel = `${beta.re}+${beta.im}i`;
+        
+        console.log(`> Beta: ${betaLabel.padEnd(5)} | Scale: ${scale.toString().padEnd(7)} | Rate: ${rate}%`);
+        finalReport += `${betaLabel},${scale},${rate},${sinks.size}\n`;
+    });
+});
 
-fs.writeFileSync('experiments/galaxy_scan_1000.csv', resultsData);
-console.log(`📊 Dataset saved: experiments/galaxy_scan_1000.csv`);
+fs.writeFileSync('experiments/stress_test_master.csv', finalReport);
+console.log(`\n✅ Done. Results saved to experiments/stress_test_master.csv`);
