@@ -1,8 +1,6 @@
 const fs = require('fs');
 
-// v2: Added a timestamp so every run is unique
-const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-const outputCSV = `experiments/stress_test_v2_${timestamp}.csv`;
+if (!fs.existsSync('experiments')) fs.mkdirSync('experiments');
 
 class GaussianCollatz {
     constructor(alpha, beta) {
@@ -57,35 +55,32 @@ const BETAS = [
     {re: 1, im: 1}  
 ];
 
-let finalReport = "Beta,Scale,ResidencyRate,UniqueSinks\n";
+let summaryReport = "Beta,Scale,ResidencyRate,UniqueSinks\n";
 
-console.log(`🧪 Running V2: Cleaning up the "Garbage" results...`);
-
-BETAS.forEach((beta, bIndex) => {
-    // Fresh runner for every Beta
+BETAS.forEach((beta) => {
     const runner = new GaussianCollatz({re: 3, im: 0}, beta);
     
-    SCALES.forEach((scale, sIndex) => {
+    SCALES.forEach((scale) => {
         let matches = 0;
         const sinks = new Set();
+        let rawData = "Final_RE,Final_IM,Is_Stable\n";
 
-        // This loop ensures we aren't just repeating the same point
         for (let i = 1; i <= SAMPLE_SIZE; i++) {
             const finalPoint = runner.runExperiment({re: i, im: 0});
+            const isStable = runner.isInMandelbrot(finalPoint, scale);
+            if (isStable) matches++;
             sinks.add(`${finalPoint.re.toFixed(4)},${finalPoint.im.toFixed(4)}`);
-            if (runner.isInMandelbrot(finalPoint, scale)) matches++;
+            rawData += `${finalPoint.re},${finalPoint.im},${isStable ? 1 : 0}\n`;
         }
 
+        // CORRECTED FILENAME: Includes Imaginary part
+        const rawFileName = `experiments/raw_data_B${beta.re}_i${beta.im}_S${scale}.csv`;
+        fs.writeFileSync(rawFileName, rawData);
+
         const rate = ((matches / SAMPLE_SIZE) * 100).toFixed(2);
-        const betaLabel = `${beta.re}+${beta.im}i`;
-        
-        console.log(`> Beta: ${betaLabel} | Scale: ${scale} | Rate: ${rate}%`);
-        finalReport += `${betaLabel},${scale},${rate},${sinks.size}\n`;
-        
-        // Note: If you have a draw function, call it HERE 
-        // passing (beta, scale) to ensure the image is unique!
+        summaryReport += `${beta.re}+${beta.im}i,${scale},${rate},${sinks.size}\n`;
     });
 });
 
-fs.writeFileSync(outputCSV, finalReport);
-console.log(`\n✅ Success. V2 Data saved to: ${outputCSV}`);
+fs.writeFileSync(`experiments/stress_test_baseline_v4.csv`, summaryReport);
+console.log("✅ Node.js Engine updated and data exported.");
