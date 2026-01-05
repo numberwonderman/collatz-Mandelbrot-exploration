@@ -76,39 +76,36 @@ class GaussianCollatz {
     }
 }
 
-const SCALES = [0.001, 0.0001, 0.00001];
+const beta = {re: 1, im: 1}; // Focusing on the "Secret Sauce"
+const scale = 0.00001;        // Using the 100% Residency scale
+const runner = new GaussianCollatz({re: 3, im: 0}, beta);
 const SAMPLE_SIZE = 1000;
-const BETAS = [{re: 1, im: 0}, {re: 2, im: 0}, {re: 1, im: 1}];
 
-let summaryReport = "Beta,Scale,ResidencyRate,UniqueSinks\n";
+const uniqueSinksMap = new Map(); // To store unique sinks and their HCv2 results
 
-BETAS.forEach((beta) => {
-    const runner = new GaussianCollatz({re: 3, im: 0}, beta);
-    SCALES.forEach((scale) => {
-        let matches = 0;
-        const sinks = new Set();
-        let rawData = "Final_RE,Final_IM,Is_Stable,HCv2_RE,HCv2_IM\n";
+for (let i = 1; i <= SAMPLE_SIZE; i++) {
+    const finalPoint = runner.runExperiment({re: i, im: 0});
+    const sinkKey = `${finalPoint.re.toFixed(4)},${finalPoint.im.toFixed(4)}`;
+    
+    if (!uniqueSinksMap.has(sinkKey)) {
+        // Apply H-C v2 transformation [cite: 2025-12-16]
+        const hc = runner.applyHCv2(finalPoint);
+        uniqueSinksMap.set(sinkKey, {
+            raw: finalPoint,
+            hc: hc
+        });
+    }
+}
 
-        for (let i = 1; i <= SAMPLE_SIZE; i++) {
-            const finalPoint = runner.runExperiment({re: i, im: 0});
-            const isStable = runner.isInMandelbrot(finalPoint, scale);
-            if (isStable) matches++;
-            
-            // Apply the Refined Hypothesis [cite: 2025-12-16]
-            const hc = runner.applyHCv2(finalPoint);
-            
-            sinks.add(`${finalPoint.re.toFixed(4)},${finalPoint.im.toFixed(4)}`);
-            rawData += `${finalPoint.re},${finalPoint.im},${isStable ? 1 : 0},${hc.h_re},${hc.h_im}\n`;
-        }
-
-        const rawFileName = getUniqueFileName(`experiments/raw_data_B${beta.re}_i${beta.im}_S${scale}.csv`);
-        fs.writeFileSync(rawFileName, rawData);
-
-        const rate = ((matches / SAMPLE_SIZE) * 100).toFixed(2);
-        summaryReport += `${beta.re}+${beta.im}i,${scale},${rate},${sinks.size}\n`;
-    });
+// Create the "Figure 1" Data for your paper
+let plotData = "Raw_RE,Raw_IM,HCv2_RE,HCv2_IM\n";
+uniqueSinksMap.forEach((val) => {
+    plotData += `${val.raw.re},${val.raw.im},${val.hc.h_re},${val.hc.h_im}\n`;
 });
 
-const summaryFileName = getUniqueFileName(`experiments/stress_test_baseline_v4.csv`);
-fs.writeFileSync(summaryFileName, summaryReport);
-console.log(`✅ Data exported to ${summaryFileName}. No files were overwritten.`);
+const figure1Path = getUniqueFileName(`experiments/GSV1_Figure1_Beta1+1i.csv`);
+fs.writeFileSync(figure1Path, plotData);
+
+console.log(`\n🚀 GSV-1 Validation Complete!`);
+console.log(`Unique Sinks Found: ${uniqueSinksMap.size}`); // Should be 938
+console.log(`Plotting data saved to: ${figure1Path}`);
