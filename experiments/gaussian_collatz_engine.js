@@ -109,3 +109,26 @@ fs.writeFileSync(figure1Path, plotData);
 console.log(`\n🚀 GSV-1 Validation Complete!`);
 console.log(`Unique Sinks Found: ${uniqueSinksMap.size}`); // Should be 938
 console.log(`Plotting data saved to: ${figure1Path}`);
+
+// --- NEW: H-C v2 GEOMETRIC ANALYSIS ---
+const hcPoints = Array.from(uniqueSinksMap.values()).map(val => val.hc);
+
+// Filter for points in the central "eye" (magnitude < 2.0 to exclude far outliers)
+const innerRing = hcPoints.filter(p => Math.sqrt(p.h_re**2 + p.h_im**2) < 2.0);
+
+if (innerRing.length > 0) {
+    const maxRE = Math.max(...innerRing.map(p => Math.abs(p.h_re)));
+    const maxIM = Math.max(...innerRing.map(p => Math.abs(p.h_im)));
+    const squashRatio = maxRE / maxIM;
+
+    console.log(`\n--- H-C v2 Geometric Analysis (The "Squashed Wheel") ---`);
+    console.log(`Inner Ring Width (RE):  ${maxRE.toFixed(6)}`);
+    console.log(`Inner Ring Height (IM): ${maxIM.toFixed(6)}`);
+    console.log(`Squash Ratio (RE/IM):   ${squashRatio.toFixed(6)}`);
+    
+    if (Math.abs(squashRatio - 1) < 0.05) {
+        console.log("Result: Near-Circular Symmetry");
+    } else {
+        console.log("Result: Elliptic Attractor Confirmed");
+    }
+}
